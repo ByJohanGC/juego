@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atrapa el Círculo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: powderblue;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+        }
+
+        .title {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .score {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.5em;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .target {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ff6b6b, #ee5a52);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 50;
+        }
+
+        .target:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .target:active {
+            transform: scale(0.9);
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffd700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: explode 0.6s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            font-size: 1.2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1 class="title">Atrapa el Círculo</h1>
+            <div class="score">
+                Puntos: <span id="scoreValue">0</span>
+            </div>
+        </div>
+
+        <div class="target pulse" id="target"></div>
+
+        <div class="instructions">
+            ¡Haz clic en el círculo rojo antes de que se mueva!
+        </div>
+    </div>
+
+    <script>
+        let puntaje = 0;
+        let intervaloJuego;
+        
+        const objetivo = document.getElementById('target');
+        const valorPuntaje = document.getElementById('scoreValue');
+        const contenedorJuego = document.querySelector('.game-container');
+
+        function obtenerPosicionAleatoria() {
+            const anchoContenedor = window.innerWidth;
+            const altoContenedor = window.innerHeight;
+            const tamañoObjetivo = 60;
+            
+            const maxX = anchoContenedor - tamañoObjetivo;
+            const maxY = altoContenedor - tamañoObjetivo;
+            
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+            
+            return { x, y };
+        }
+
+        function moverObjetivo() {
+            const posicion = obtenerPosicionAleatoria();
+            objetivo.style.left = posicion.x + 'px';
+            objetivo.style.top = posicion.y + 'px';
+        }
+
+        function crearParticulas(x, y) {
+            for (let i = 0; i < 8; i++) {
+                const particula = document.createElement('div');
+                particula.className = 'particle';
+                particula.style.left = x + 'px';
+                particula.style.top = y + 'px';
+                
+                const angulo = (Math.PI * 2 * i) / 8;
+                const distancia = 30 + Math.random() * 20;
+                const finalX = x + Math.cos(angulo) * distancia;
+                const finalY = y + Math.sin(angulo) * distancia;
+                
+                particula.style.transform = `translate(${finalX - x}px, ${finalY - y}px)`;
+                
+                contenedorJuego.appendChild(particula);
+                
+                setTimeout(() => {
+                    particula.remove();
+                }, 100);
+            }
+        }
+
+        function actualizarPuntaje() {
+            puntaje++;
+            valorPuntaje.textContent = puntaje;
+        }
+
+        function manejarClicObjetivo(evento) {
+            const rectangulo = objetivo.getBoundingClientRect();
+            const centroX = rectangulo.left + rectangulo.width / 2;
+            const centroY = rectangulo.top + rectangulo.height / 2;
+            
+            crearParticulas(centroX, centroY);
+            actualizarPuntaje();
+            moverObjetivo();
+        }
+
+        function iniciarJuego() {
+            moverObjetivo();
+            
+            intervaloJuego = setInterval(() => {
+                moverObjetivo();
+            }, 2000);
+        }
+
+        objetivo.addEventListener('click', manejarClicObjetivo);
+
+        iniciarJuego();
+    </script>
+</body>
+</html>
